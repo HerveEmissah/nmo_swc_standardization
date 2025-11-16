@@ -1,0 +1,28 @@
+version: '3.7'
+
+services:
+
+  web:
+    container_name: swc-std-app
+    restart: on-failure
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      - '.:/app'
+      - '/app/node_modules'
+      - ./log:/app/log
+    ports:
+      - 8282:80
+    environment:
+      - CHOKIDAR_USEPOLLING=true
+      - DANGEROUSLY_DISABLE_HOST_CHECK=true
+      - HOST=0.0.0.0
+      - PUBLIC_URL=http://ec2-100-28-253-215.compute-1.amazonaws.com:8282
+    #depends_on:
+    #  - std_files_web_1  # set dependency to backend container
+    networks:
+      - 'swc_std_network'
+
+networks:
+  swc_std_network:
