@@ -16,9 +16,41 @@ function App() {
   const [selectedFiles, setSelectedFiles] = useState(null);
   const [error, setError] = useState(null);
   const [logContent, setLogContent] = useState('');
+  const [checkCorrectBranchTag, setCheckCorrectBranchTag] = useState(false);
   const [checkLongConnections, setCheckLongConnections] = useState(true);
+  const [branchtype, setbranchtype] = useState(2); // Set default value to 2
   const [stdevX, setStdevX] = useState(6); // Set default value to 6
   const [isSaving, setIsSaving] = useState(false); // State for tracking saving status
+  const [systemBusy, setSystemBusy] = useState(false);
+
+  const branchSelectRef = useRef(null);
+  const branchTextRef = useRef(null);
+
+  const stdevSelectRef = useRef(null);
+  const stdevTextRef = useRef(null);
+  
+  const branchLabels = {
+    2: 'Axon (2)',
+    3: 'Basal dendrites (3)',
+    4: 'Apical dendrites (4)',
+    5: 'Other dendrites (5)',
+    6: 'Unspecified neurites (6)',
+    7: 'Glial processes (7)',
+  };
+
+  useEffect(() => {
+    if (branchSelectRef.current && branchTextRef.current) {
+      branchSelectRef.current.style.width =
+        branchTextRef.current.offsetWidth + 32 + 'px'; // arrow padding
+    }
+  }, [branchtype]);
+
+  useEffect(() => {
+    if (stdevSelectRef.current && stdevTextRef.current) {
+      stdevSelectRef.current.style.width =
+        stdevTextRef.current.offsetWidth + 32 + 'px'; // arrow padding
+    }
+  }, [stdevX]);
 
   const handleFileChange = (e) => {
     const files = e.target.files;
@@ -46,31 +78,60 @@ function App() {
         body: formData,
       });
 
+      if (response.status === 429) {
+         setSystemBusy(true);
+         window.alert('System currently in use. Please try again later.');
+         return;
+      }
+
       if (response.ok) {
-        // Handle success response here
+        //window.alert('Upload to Server completed successfully.');
       } else {
-        // Handle error response here
+        window.alert('Failed to upload files to server.');
       }
 
       // Handle the response (e.g., display a success message).
     } catch (error) {
       // Handle errors (e.g., display an error message).
       console.error('Error uploading files:', error);
+    } finally {
+      setIsSaving(false); // Set saving state to false when saving ends
+      setSystemBusy(false);
     }
-
-    setIsSaving(false); // Set saving state to false when saving ends
 
   };
 
   const handleStandardizeClick = async () => {
     try {
+      const formData = new FormData();
+      for (const file of selectedFiles) {
+        formData.append('files', file);
+      }
+      formData.append('checkCorrectBranchTag', checkCorrectBranchTag);
+      formData.append('branchtype', branchtype);
+
       const response = await fetch('/nmo/SWC_STD', {
         method: 'POST',
-        body: selectedFiles,
+        body: formData,
       });
+	  
+      if (response.status === 429) {
+         setSystemBusy(true);
+         setIsSaving(false);
+         window.alert('System currently in use. Please try again later.');
+         return;
+      }
 
       if (response.ok) {
-        window.alert('Standardize process completed successfully.');
+        //window.alert('Standardize process completed successfully.');
+        const shouldDownload = window.confirm(
+           'Standardize process completed successfully.\nDo you want to download the files?'
+        );
+
+        if (shouldDownload) {
+          await handleDownloadClick();
+        }
+        setSystemBusy(false);
       } else {
         window.alert('Failed to complete Standardize process.');
       }
@@ -94,8 +155,23 @@ function App() {
         body: formData,
       });
 
+      if (response.status === 429) {
+         setSystemBusy(true);
+         setIsSaving(false);
+         window.alert('System currently in use. Please try again later.');
+         return;
+      }
+
       if (response.ok) {
-        window.alert('AutoConnect process completed successfully.');
+        //window.alert('AutoConnect process completed successfully.');
+        const shouldDownload = window.confirm(
+           'AutoConnect process completed successfully.\nDo you want to download the files?'
+        );
+
+        if (shouldDownload) {
+          await handleDownloadConnectClick ();
+        }
+        setSystemBusy(false);
       } else {
         window.alert('Failed to complete AutoConnect process.');
       }
@@ -105,15 +181,30 @@ function App() {
     }
   };
 
-  const handleCorrectTagClick = async () => {
+  const handleAutoTagClick = async () => {
     try {
       const response = await fetch('/nmo/CorrectTag', {
         method: 'POST',
         body: selectedFiles,
       });
 
+      if (response.status === 429) {
+         setSystemBusy(true);
+         setIsSaving(false);
+         window.alert('System currently in use. Please try again later.');
+         return;
+      }
+
       if (response.ok) {
-        window.alert('Tag correction process completed successfully.');
+        //window.alert('Tag correction process completed successfully.');
+        const shouldDownload = window.confirm(
+           'Auto Tag process completed successfully.\nDo you want to download the files?'
+        );
+
+        if (shouldDownload) {
+          await handleDownloadCorrectedTagClick();
+        }
+        setSystemBusy(false);
       } else {
         window.alert('Failed to complete Tag correction process.');
       }
@@ -237,7 +328,7 @@ function App() {
       console.log('Blob URL:', url);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `swc_corrected_tags_${timestamp}.zip`;
+      a.download = `swc_auto_tag_${timestamp}.zip`;
       document.body.appendChild(a);
       console.log('Anchor tag appended to body');
       a.click();
@@ -255,98 +346,223 @@ function App() {
   };
 
 
-  const buttonStyle = {
-    fontSize: '16px',
-    padding: '5px 20px 1px 5px', // top right bottom left
-    backgroundColor: '#d3d3d3', // Light gray color
-    color: 'green',
-    border: '1px solid black',
-    cursor: 'pointer', // Add a pointer cursor on hover
-    width: '140px',
-    marginLeft: '5px',
-    marginTop: '20px',
-    marginBottom: '5px',
-    marginRight: '20px',
-  };
+const sharedGridColumns = '360px 260px';
 
-  const formStyle = {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '20px', 
-    marginTop: '20px',
-  };
+const buttonStyle = {
+  fontSize: '16px',
+  padding: '6px 20px',
+  backgroundColor: '#d3d3d3',
+  color: 'green',
+  border: '1px solid black',
+  cursor: 'pointer',
+  width: '140px',
+  marginLeft: '5px',
+  marginTop: '10px',
+  marginBottom: '10px',
+  marginRight: '20px',
+  whiteSpace: 'nowrap',
+  display: 'inline-flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+};
 
-  const verticalAlignStyle = {
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'flex-start',
-    marginTop: '10px',
-    paddingLeft: '250px',
-  };
+const formStyle = {
+  display: 'flex',
+  alignItems: 'center',
+  gap: '20px',
+  marginTop: '15px',
+  marginLeft: '5px',
+  marginBottom: '50px',
+};
 
-  return (
-    <div align="left">
-      <img src={logo} width="700" height="100" alt="swc qc logo" style={{ marginBottom: '10px', marginLeft: '5px', marginTop: '5px' }} />
+const row2GridStyle = {
+  display: 'grid',
+  gridTemplateColumns: sharedGridColumns,
+  columnGap: '80px',
+  alignItems: 'start',
+  marginTop: '10px',
+  marginBottom: '25px',
+  marginLeft: '5px',
+  position: 'relative',
+};
+
+const row3GridStyle = {
+  display: 'grid',
+  gridTemplateColumns: '360px 260px 260px',
+  columnGap: '80px',
+  marginBottom: '25px',
+  marginLeft: '5px',
+};
+
+const checkboxLabelStyle = {
+  display: 'flex',
+  alignItems: 'center',
+  gap: '4px',
+};
+
+const subRowStyle = {
+  marginTop: '2px',
+  marginLeft: '18px',
+  display: 'flex',
+  alignItems: 'center',
+  gap: '6px',
+  flexWrap: 'nowrap',
+};
+
+const selectStyle = {
+  whiteSpace: 'nowrap',
+  fontSize: '16px',
+  fontFamily: 'inherit',
+};
+
+
+return (
+  <div align="left">
+    <img
+      src={logo}
+      width="700"
+      height="100"
+      alt="swc qc logo"
+      style={{ marginBottom: '10px', marginLeft: '5px', marginTop: '5px' }}
+    />
+
+    {/* ---------- ROW 1: Upload ---------- */}
+    <form onSubmit={handleSubmit} style={formStyle}>
+      <input
+        type="file"
+        multiple
+        webkitdirectory="true"
+        accept=".swc"
+        onChange={handleFileChange}
+        style={{ color: 'green', width: '240px', fontSize: '16px' }}
+      />
+
+      <button type="submit" style={{ ...buttonStyle, marginLeft: '80px' }}>
+        {isSaving ? 'Saving...' : 'Upload To Server'}
+      </button>
+    </form>
+
+    {/* ---------- ROW 2: Options (GRID = stable) ---------- */}
+    <div style={row2GridStyle}>
+      {/* Column 1: Correct Branch Tag */}
       <div>
-        <form onSubmit={handleSubmit} style={{ ...formStyle, marginBottom: '70px' }}>
+        <label style={checkboxLabelStyle}>
           <input
-            type="file"
-            multiple
-            webkitdirectory="true"
-            accept=".swc"
-            onChange={handleFileChange}
-            style={{ color: 'green', width: '220px', fontSize: '16px' }}
+            type="checkbox"
+            checked={checkCorrectBranchTag}
+            onChange={(e) => setCheckCorrectBranchTag(e.target.checked)}
           />
-          <button
-            type="submit"
-            style={{ color: 'green', width: '140px', cursor: 'pointer', backgroundColor: '#d3d3d3', fontSize: '16px', border: '1px solid black', marginLeft: '40px' }}
+          Correct Branch Tag
+        </label>
+
+        <div style={subRowStyle}>
+          <label style={{ marginRight: '4px' }}>New BranchType</label>
+
+          {/* Hidden width calculator for BranchType */}
+          <span
+            ref={branchTextRef}
+            style={{
+              position: 'absolute',
+              visibility: 'hidden',
+              whiteSpace: 'nowrap',
+              fontSize: '16px',
+              fontFamily: 'inherit',
+              fontWeight: 'normal',
+            }}
           >
-            {isSaving ? 'Saving...' : 'Upload To Server'}
-          </button>
-        </form>
-        <div style={verticalAlignStyle}>
-          <div style={{ paddingLeft: '30px' }}>
-            <input
-              type="checkbox"
-              checked={checkLongConnections}
-              onChange={(e) => setCheckLongConnections(e.target.checked)}
-            />
-            <label style={{ marginLeft: '10px' }}>Fix long connections</label>
-          </div>
-          <div style={{ marginTop: '5px', marginBottom: '1px' }}>
-            <label style={{ marginLeft: '60px', marginRight: '10px' }}>Use Stdev X </label>
-            <select value={stdevX} onChange={(e) => setStdevX(Number(e.target.value))}>
-              {Array.from({ length: 7 }, (_, i) => i + 4).map((num) => (
-                <option key={num} value={num}>
-                  {num}
-                </option>
-              ))}
-            </select>
-          </div>
-        </div>
-        <div> </div>
-        <div>
-          <button onClick={handleStandardizeClick} style={{ ...buttonStyle, marginRight: '130px' }}>Standardize</button>
-          <button onClick={handleAutoConnectClick} style={{ ...buttonStyle, marginRight: '130px' }}>Auto Connect</button>
-          <button onClick={handleCorrectTagClick} style={{ ...buttonStyle }}>Correct Tags</button>
-        </div>
-        <div>
-          <button onClick={handleDownloadClick} style={{ ...buttonStyle, marginRight: '130px' }}>
-            Download Standardized
-          </button>
-          <button onClick={handleDownloadConnectClick} style={{ ...buttonStyle, marginRight: '130px' }}>
-            Download Connected
-          </button>
-          <button onClick={handleDownloadCorrectedTagClick} style={{ ...buttonStyle }}>
-            Download Corrected Tags
-          </button>
+            {branchLabels[branchtype]}
+          </span>
+
+          <select
+            ref={branchSelectRef}
+            value={branchtype}
+            onChange={(e) => setbranchtype(Number(e.target.value))}
+            style={selectStyle}
+          >
+            <option value={2}>Axon (2)</option>
+            <option value={3}>Basal dendrites (3)</option>
+            <option value={4}>Apical dendrites (4)</option>
+            <option value={5}>Other dendrites (5)</option>
+            <option value={6}>Unspecified neurites (6)</option>
+            <option value={7}>Glial processes (7)</option>
+          </select>
         </div>
       </div>
-      <div>
-        <LogViewer />
+
+      {/* Column 2: Fix long connections */}
+      <div style={{ marginLeft: '-110px' }}>
+        <label style={checkboxLabelStyle}>
+          <input
+            type="checkbox"
+            checked={checkLongConnections}
+            onChange={(e) => setCheckLongConnections(e.target.checked)}
+          />
+          Fix long connections
+        </label>
+
+        <div style={subRowStyle}>
+          <label style={{ marginRight: '6px' }}>Use Stdev X</label>
+
+          {/* Hidden width calculator for StdevX */}
+          <span
+            ref={stdevTextRef}
+            style={{
+              position: 'absolute',
+              visibility: 'hidden',
+              whiteSpace: 'nowrap',
+              fontSize: '16px',
+              fontFamily: 'inherit',
+              fontWeight: 'normal',
+            }}
+          >
+            {String(stdevX)}
+          </span>
+
+          <select
+            ref={stdevSelectRef}
+            value={stdevX}
+            onChange={(e) => setStdevX(Number(e.target.value))}
+            style={selectStyle}
+          >
+            {Array.from({ length: 7 }, (_, i) => i + 4).map((num) => (
+              <option key={num} value={num}>
+                {num}
+              </option>
+            ))}
+          </select>
+        </div>
       </div>
     </div>
-  );
+
+    {/* ---------- ROW 3: Actions (THREE columns) ---------- */}
+    <div style={row3GridStyle}>
+      {/* Column 1 */}
+      <div>
+        <button onClick={handleStandardizeClick} style={buttonStyle}>
+          Standardize
+        </button>
+      </div>
+
+      {/* Column 2: aligned under Fix long connections */}
+      <div style={{ marginLeft: '-110px' }}>
+        <button onClick={handleAutoConnectClick} style={buttonStyle}>
+          Auto Connect
+        </button>
+      </div>
+
+      {/* Column 3: Auto Tag Apical on third row */}
+      <div  style={{ marginLeft: '-200px' }}>
+        <button onClick={handleAutoTagClick} style={buttonStyle}>
+          Auto Tag Apical
+        </button>
+      </div>
+    </div>
+
+    {/* ---------- Logs ---------- */}
+    <LogViewer />
+  </div>
+);
+
 }
 
 export default App;
