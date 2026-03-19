@@ -1,0 +1,34 @@
+APIs for Standardization Pipeline
+1. Upload Archive:
+curl -vk -X POST https://swcstandardization.computational-neuromorpho.org/nmo/upload $(for f in neuron_archive/*.swc; do printf ' -F files=@%s' "$f"; done)
+
+2. Process SWC files standardization:
+curl -vk -X POST https://swcstandardization.computational-neuromorpho.org/nmo/SWC_STD
+
+Optional Check and correction of branchTag
+curl -vk -X POST https://swcstandardization.computational-neuromorpho.org/nmo/SWC_STD -F "checkCorrectBranchTag=true" -F "branchtype=4"
+
+3. Download Standardized SWC files
+curl -vk -X GET "https://swcstandardization.computational-neuromorpho.org/nmo/download?timestamp=$(date +%Y%m%d_%H%M%S)" -o swc_standardized.zip
+
+APIs for Long Connections Pipeline
+1. Upload Archive:
+curl -vk -X POST https://swcstandardization.computational-neuromorpho.org/nmo/upload $(for f in long_connection_archive/*.swc; do printf ' -F files=@%s' "$f"; done)
+
+2. Process Disjoint subtrees and Long connections
+curl -vk -X POST "https://swcstandardization.computational-neuromorpho.org/nmo/connect_disjoint_subtrees" -F "checkLongConnections=true" -F "stdevX=6"
+
+3. Download SWC files without long connections and disjoint subtrees
+curl -vk -X GET "https://swcstandardization.computational-neuromorpho.org/nmo/download_connected?timestamp=$(date +%Y%m%d_%H%M%S)" -o swc_connected.zip
+
+
+APIs for Pyramidal AutoTag Pipeline
+1. Upload Archive:
+curl -vk -X POST https://swcstandardization.computational-neuromorpho.org/nmo/upload $(for f in pyramidals_archive/*.swc; do printf ' -F files=@%s' "$f"; done)
+
+2. Process AutoTagging of pyramidals
+curl -vk -X GET "https://swcstandardization.computational-neuromorpho.org/nmo/CorrectTag"
+
+3. Download AutoTagged pyramidal files
+curl -vk -X GET "https://swcstandardization.computational-neuromorpho.org/nmo/download_corrected_tags?timestamp=$(date +%Y%m%d_%H%M%S)" -o swc_auto_tag.zip
+
