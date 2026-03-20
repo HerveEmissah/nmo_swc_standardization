@@ -9,7 +9,7 @@ Optional Check and correction of branchTag
 curl -vk -X POST https://swcstandardization.computational-neuromorpho.org/nmo/SWC_STD -F "checkCorrectBranchTag=true" -F "branchtype=4"
 
 3. Download Standardized SWC files
-curl -vk -X GET "https://swcstandardization.computational-neuromorpho.org/nmo/download?timestamp=$(date +%Y%m%d_%H%M%S)" -o swc_standardized.zip
+curl -vk -X GET "https://swcstandardization.computational-neuromorpho.org/nmo/download" -o swc_standardized.zip
 
 APIs for Long Connections Pipeline
 1. Upload Archive:
@@ -19,7 +19,7 @@ curl -vk -X POST https://swcstandardization.computational-neuromorpho.org/nmo/up
 curl -vk -X POST "https://swcstandardization.computational-neuromorpho.org/nmo/connect_disjoint_subtrees" -F "checkLongConnections=true" -F "stdevX=6"
 
 3. Download SWC files without long connections and disjoint subtrees
-curl -vk -X GET "https://swcstandardization.computational-neuromorpho.org/nmo/download_connected?timestamp=$(date +%Y%m%d_%H%M%S)" -o swc_connected.zip
+curl -vk -X GET "https://swcstandardization.computational-neuromorpho.org/nmo/download_connected" -o swc_connected.zip
 
 
 APIs for Pyramidal AutoTag Pipeline
@@ -30,5 +30,4 @@ curl -vk -X POST https://swcstandardization.computational-neuromorpho.org/nmo/up
 curl -vk -X GET "https://swcstandardization.computational-neuromorpho.org/nmo/CorrectTag"
 
 3. Download AutoTagged pyramidal files
-curl -vk -X GET "https://swcstandardization.computational-neuromorpho.org/nmo/download_corrected_tags?timestamp=$(date +%Y%m%d_%H%M%S)" -o swc_auto_tag.zip
-
+curl -vk -X GET "https://swcstandardization.computational-neuromorpho.org/nmo/download_corrected_tags" -o swc_auto_tag.zip
