@@ -6,7 +6,7 @@
 #SBATCH --mem=100G                 # Total memory for the job
 #SBATCH --time=7-00:00:00          # Time allocation (7 days)
 #SBATCH --mail-type=BEGIN,END,FAIL
-#SBATCH --mail-user=hemissah@gmu.edu
+#SBATCH --mail-user=xxxxxxx@gmu.edu
 #SBATCH --ntasks=10   #  workers, 1 manager
 
 set echo
