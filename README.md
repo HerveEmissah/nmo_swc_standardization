@@ -378,4 +378,4 @@ and evaluation using broader independently curated datasets.
 
 This research was supported by resources provided by the [Office of Research Computing at George Mason University](https://orc.gmu.edu) and funded in part by grants from the **National Science Foundation (Award No. 2018631)** and the **National Institutes of Health (Award No. R37NS39600)**.
 
-The authors are grateful to Drs. Duncan Donohue, Sridevi Polavaram, and Sumit Nanda for developing various components of the NeuroMorpho.Org data processing codebase used in this work.
+The authors are grateful to Drs. Duncan Donohue, Sridevi Polavaram, and Sumit Nanda for developing components of the NeuroMorpho.Org data processing codebase used in this work.
